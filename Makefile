@@ -1,7 +1,7 @@
 # Makefile
 
 SHELL:=/bin/bash
-NAME="node-status-server"
+NAME=node-status-server
 
 .PHONY: build
 .PHONY: run
