@@ -24,9 +24,9 @@ type provisionStatus struct {
 	Status string `json:"status"`
 }
 
-func getAnsibleStatus() (string, error) {
+func getAnsibleStatus(factPath string) (string, error) {
 	var statusData ansibleStatus
-	jsonFile, err := os.Open("/etc/ansible/facts.d/ansible_status.fact")
+	jsonFile, err := os.Open(factPath)
 	if err != nil {
 		return "", err
 	}
@@ -39,9 +39,9 @@ func getAnsibleStatus() (string, error) {
 	return statusData.Status, nil
 }
 
-func getProvisionStatus() (string, error) {
+func getProvisionStatus(factPath string) (string, error) {
 	var statusData provisionStatus
-	jsonFile, err := os.Open("/etc/ansible/facts.d/provision_status.fact")
+	jsonFile, err := os.Open(factPath)
 	if err != nil {
 		return "", err
 	}
@@ -54,34 +54,79 @@ func getProvisionStatus() (string, error) {
 	return statusData.Status, nil
 }
 
-type NodeStatus struct {
+type NodeStatusResponse struct {
 	Name            string `json:"name,omitempty"`
 	AnsibleStatus   string `json:"ansible_status,omitempty"`
 	ProvisionStatus string `json:"provision_status,omitempty"`
 }
 
-func NewNodeStatus() (*NodeStatus, error) {
-	nodeName, err := getNodeName()
+type NodeStatusRequest struct {
+	name                string
+	ansibleStatusPath   string
+	provisionStatusPath string
+}
+
+type NodeStatusRequestOption func(*NodeStatusRequest)
+
+func WithName(name string) NodeStatusRequestOption {
+	return func(ns *NodeStatusRequest) {
+		ns.name = name
+	}
+}
+func WithAnsibleFactPath(path string) NodeStatusRequestOption {
+	return func(ns *NodeStatusRequest) {
+		ns.ansibleStatusPath = path
+	}
+}
+
+func WithProvisionFactPath(path string) NodeStatusRequestOption {
+	return func(ns *NodeStatusRequest) {
+		ns.provisionStatusPath = path
+	}
+}
+
+func NewNodeStatusRequest(nodeName string, opts ...NodeStatusRequestOption) *NodeStatusRequest {
+	const (
+		defaultAnsibleFactPath   = "/etc/ansible/facts.d/ansible_status.fact"
+		defaultProvisionFactPath = "/etc/ansible/facts.d/provision_status.fact"
+	)
+	nsr := &NodeStatusRequest{
+		name:                nodeName,
+		ansibleStatusPath:   defaultAnsibleFactPath,
+		provisionStatusPath: defaultProvisionFactPath,
+	}
+	for _, opt := range opts {
+		opt(nsr)
+	}
+	return nsr
+
+}
+
+func NewNodeStatus(nsr *NodeStatusRequest) (*NodeStatusResponse, error) {
+	ansibleStatus, err := getAnsibleStatus(nsr.ansibleStatusPath)
 	if err != nil {
 		return nil, err
 	}
-	ansibleStatus, err := getAnsibleStatus()
+	provisionStatus, err := getProvisionStatus(nsr.provisionStatusPath)
 	if err != nil {
 		return nil, err
 	}
-	provisionStatus, err := getProvisionStatus()
-	if err != nil {
-		return nil, err
-	}
-	return &NodeStatus{
-		Name:            nodeName,
+	return &NodeStatusResponse{
+		Name:            nsr.name,
 		AnsibleStatus:   ansibleStatus,
 		ProvisionStatus: provisionStatus,
 	}, nil
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	status, err := NewNodeStatus()
+	nodeName, err := getNodeName()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	nsr := NewNodeStatusRequest(nodeName)
+	status, err := NewNodeStatus(nsr)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
