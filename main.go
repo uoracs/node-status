@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func getNodeName() (string, error) {
@@ -13,7 +14,8 @@ func getNodeName() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return name, nil
+	shortName := strings.Split(name, ".")[0]
+	return shortName, nil
 }
 
 type ansibleStatus struct {
@@ -142,7 +144,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	host, found := os.LookupEnv("NODE_STATUS_SERVER_HOST")
+	if !found {
+		host = "0.0.0.0"
+	}
+	port, found := os.LookupEnv("NODE_STATUS_SERVER_PORT")
+	if !found {
+		port = "8080"
+	}
+	connStr := fmt.Sprintf("%s:%s", host, port)
+
 	http.HandleFunc("/", handler)
-	fmt.Println("Server is running at http://0.0.0.0:8080")
-	http.ListenAndServe(":8080", nil)
+	fmt.Printf("Server is running at http://%s\n", connStr)
+	http.ListenAndServe(connStr, nil)
 }
