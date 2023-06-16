@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -156,5 +157,5 @@ func main() {
 
 	http.HandleFunc("/", handler)
 	fmt.Printf("Server is running at http://%s\n", connStr)
-	http.ListenAndServe(connStr, nil)
+	log.Fatal(http.ListenAndServe(connStr, nil))
 }
