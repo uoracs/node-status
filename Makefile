@@ -3,13 +3,10 @@
 SHELL:=/bin/bash
 NAME=node-status-server
 
-.PHONY: build
-.PHONY: run
-.PHONY: release
-
+.PHONY: build install test clean release
 
 build:
-	go build -o bin/$(NAME) -v
+	go build -o bin/$(NAME)
 
 install:
 	cp bin/$(NAME) /usr/local/bin/$(NAME)
