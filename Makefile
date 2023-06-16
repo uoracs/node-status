@@ -18,6 +18,7 @@ test:
 clean:
 	rm -rf bin
 	rm -f /etc/systemd/system/$(NAME).service
+	rm -rf /etc/systemd/system/$(NAME).service.d/
 
 release:
 	goreleaser release --snapshot --clean
