@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
-ExecStart=/usr/local/bin/node-status-server
+ExecStart=/usr/local/sbin/node-status-server
 
 [Install]
 WantedBy=multi-user.target
