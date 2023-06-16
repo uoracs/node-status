@@ -150,7 +150,7 @@ func main() {
 	}
 	port, found := os.LookupEnv("NODE_STATUS_SERVER_PORT")
 	if !found {
-		port = "8080"
+		port = "30622"
 	}
 	connStr := fmt.Sprintf("%s:%s", host, port)
 

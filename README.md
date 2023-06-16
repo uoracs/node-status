@@ -9,7 +9,7 @@ A single endpoint that returns status information based on some ansible facts.
 Example:
 
 ```bash
-$ curl localhost:8080/
+$ curl localhost:30622/
 {"name":"myhost","ansible_status":"ok","provision_status":"success"}
 ```
 
@@ -21,7 +21,7 @@ Clone the repo, `make`, `make test`, `make install`. You'll also need to `system
 
 ## Configuration
 
-It's not really configurable outside the hosting parameters. By default, it listens on `0.0.0.0:8080`.
+It's not really configurable outside the hosting parameters. By default, it listens on `0.0.0.0:30622`.
 
 If you'd like to change the port, you can run `systemctl edit node-status-server`, which creates a file at `/etc/systemd/system/node-status-server.d/override.conf`, with the following content:
 
