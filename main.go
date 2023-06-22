@@ -121,7 +121,7 @@ func NewNodeStatus(nsr *NodeStatusRequest) (*NodeStatusResponse, error) {
 	}, nil
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func rootHandler(w http.ResponseWriter, r *http.Request) {
 	nodeName, err := getNodeName()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -144,6 +144,27 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonStatus)
 }
 
+func f5Handler(w http.ResponseWriter, r *http.Request) {
+	nodeName, err := getNodeName()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	nsr := NewNodeStatusRequest(nodeName)
+	status, err := NewNodeStatus(nsr)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	if status.ProvisionStatus == "success" {
+		w.Write([]byte("up"))
+		return
+	}
+	w.Write([]byte("down"))
+}
+
 func main() {
 	host, found := os.LookupEnv("NODE_STATUS_SERVER_HOST")
 	if !found {
@@ -155,7 +176,8 @@ func main() {
 	}
 	connStr := fmt.Sprintf("%s:%s", host, port)
 
-	http.HandleFunc("/", handler)
+	http.HandleFunc("/", rootHandler)
+	http.HandleFunc("/f5", f5Handler)
 	fmt.Printf("Server is running at http://%s\n", connStr)
 	log.Fatal(http.ListenAndServe(connStr, nil))
 }
